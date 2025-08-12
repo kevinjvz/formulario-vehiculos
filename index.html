@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Registro de vehículos</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; margin: 24px; color: #222; }
+    form { max-width: 520px; background: #f7f7f8; padding: 16px; border-radius: 8px; }
+    label { display: block; margin-top: 12px; font-weight: 600; }
+    input, button { margin-top: 6px; padding: 10px; width: 100%; box-sizing: border-box; }
+    button { background: #2563eb; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
+    button:hover { background: #1d4ed8; }
+    .msg { margin-top: 12px; font-size: 14px; }
+    .ok { color: #065f46; }
+    .err { color: #b91c1c; }
+  </style>
+</head>
+<body>
+  <h1>Registro de vehículos</h1>
+  <form id="f">
+    <label>Fecha *</label>
+    <input type="date" id="fecha" required />
+    <label>Vehículo *</label>
+    <input type="text" id="vehiculo" placeholder="Ej. Camión 3, Sedan" required />
+    <label>Número de Serie *</label>
+    <input type="text" id="numeroSerie" placeholder="Ej. 1HGCM82633A004352" required />
+    <label>Trabajador *</label>
+    <input type="text" id="trabajador" placeholder="Nombre y apellido" required />
+    <button type="submit">Enviar</button>
+    <div id="msg" class="msg"></div>
+  </form>
+
+  <script>
+    const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyqoPpjpBFUuCOGr-MFoqb_zz8nIn41NlpBZjJMWv4Mi64IzfTeTFANKjl0LtUKwKPt4A/exec"; // pega aquí la URL de Apps Script
+
+    function hoyISO() {
+      const d = new Date();
+      d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+      return d.toISOString().slice(0,10);
+    }
+    document.getElementById('fecha').value = hoyISO();
+
+    const f = document.getElementById("f");
+    const msg = document.getElementById("msg");
+
+    f.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      msg.textContent = "";
+      msg.className = "msg";
+
+      const payload = {
+        fecha: document.getElementById("fecha").value.trim(),
+        vehiculo: document.getElementById("vehiculo").value.trim(),
+        numeroSerie: document.getElementById("numeroSerie").value.trim(),
+        trabajador: document.getElementById("trabajador").value.trim()
+      };
+
+      if (!payload.fecha || !payload.vehiculo || !payload.numeroSerie || !payload.trabajador) {
+        msg.textContent = "Completa todos los campos obligatorios.";
+        msg.classList.add("err");
+        return;
+      }
+
+      try {
+        // Para evitar problemas de CORS, puedes no leer la respuesta (mode: "no-cors")
+        const res = await fetch(WEBAPP_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        // Si tu Apps Script está abierto a cualquiera, la petición suele funcionar.
+        // Opcional: comprobar respuesta si el navegador lo permite.
+        msg.textContent = "Registro enviado.";
+        msg.classList.add("ok");
+        f.reset();
+        document.getElementById('fecha').value = hoyISO();
+      } catch (err) {
+        msg.textContent = "Error al enviar. Intenta de nuevo.";
+        msg.classList.add("err");
+      }
+    });
+  </script>
+</body>
+</html>
